@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <sstream>
 #include <vector>
+#include <cmath>
 
 using namespace std;
 
@@ -25,6 +26,7 @@ void showNestedVector(vector<vector<float> > nestedVect) {
 }		
 
 
+
 float sum1DVector(vector<float> oneDVector, int index) {
 	float container = 0.0;
 	for (int i=0; i<index; i++)
@@ -33,10 +35,20 @@ float sum1DVector(vector<float> oneDVector, int index) {
 }
 
 
-float sumWxH(vector<float> W, vector<float> H) {
+float sumVectMult
+(vector<float> Vect1, vector<float> Vect2, float factor, int index) {
 	float container = 0.0;
-	for (int i=0; i<W.size(); i++) 
-		container += (W[i] * H[i]);
+	for (int i=0; i<index; i++) 
+		container += (Vect1[i] * Vect2[i] * factor);
+	return container;
+}
+
+
+float sumVectMult2
+(vector<float> Vect1, vector<float> Vect2, float factor, int index) {
+	float container = 0.0;
+	for (int i=0; i<index; i++)
+		container += (Vect1[i] * factor * pow(Vect2[i], 2.0));
 	return container;
 }
 
@@ -83,19 +95,55 @@ vector<float>
 SumS(vector<float> SVector, int index) {
 	vector<float> container;
 	int indexVect;
-	for (int i=index; i>=0; i--) {
-		if (i == index)
-			container.push_back(SVector[i]);
-		else if (i == index - 1)
-			container.push_back(SVector[i] + SVector[i-1]);
-		else
-			indexVect = container.size();
+	for (int i=index-1; i>=0; i--) {
+		if (i == index - 1) 
+			container.push_back(SVector[i]); 
+		else if (i == index - 2) 
+			container.push_back(SVector[i+1] + SVector[i]);
+		else {
+			indexVect = container.size()-1;
 			container.push_back(SVector[i] +
-					    container[indexVect]);
-		}
+					    container[indexVect]); }
+	}
 	return container;
 }	
 
+
+vector<float>
+SumP(vector<float> SSVector, vector<float> lenght,  int index) {
+	vector<float> container;
+	for (int i=0; i<index; i++)
+		container.push_back((SSVector[i] + SSVector[i+1]) *
+				     lenght[i] / 2.0);
+	return container;
+}
+
+
+vector<float>
+SumF(vector<float> SumP, int index) {
+	vector<float> container;
+	int indexVect;
+	for (int i=index-1; i>=0; i--) {
+		if(i == index-1)
+			container.push_back(SumP[i]);
+		else if (i == index-2)
+			container.push_back(SumP[i] + SumP[i+1]);
+		else {
+			indexVect = container.size() - 1;
+			container.push_back(SumP[i] +
+					    container[indexVect]); }
+	}
+	return container;
+}
+
+
+vector<float>
+SumY(vector<float> SumF, int index, float E) {
+	vector<float> container;
+	for (int i=0; i<index; i++)
+		container.push_back(SumF[i] * 12 / (144.0 * E));
+	return container;
+}
 
 
 vector<vector<float> > readMatrix() {
@@ -127,6 +175,8 @@ vector<vector<float> > readMatrix() {
 
 
 int main() {
+
+	const double pi = atan(1.0)*4.0;
 	int qty;
 	float sumW, prodWxH, height;
 	vector<vector<float> > matrix;
@@ -153,14 +203,36 @@ int main() {
 	
 	vector<float> SSS;
 	SSS = SumS(SS, qty);
-
-
-	displayVector(SSS, qty);
-
-	cout << matrix[0][0] << endl;
+	reverse(SSS.begin(), SSS.end());
 	
 	
-	sumW = sum1DVector(weights, qty);
+	vector<float> sP;
+	sP = SumP(SSS, lenghts, qty);
+	
+
+	vector<float> sF;
+	sF = SumF(sP, qty);
+	reverse(sF.begin(), sF.end());
+
+	
+	vector<float> sY;
+	sY = SumY(sF, qty, 3e7);
+
+	float SWY, SWY2;
+	SWY = sumVectMult(weights, sY, 1000, qty);
+	SWY2 = sumVectMult2(weights, sY, 1000, qty);
+
+	// displayVector(sY, qty);
+	// cout << "SWY = " << SWY << endl;
+	// cout << "SWY2 = " << SWY2 << endl;
+	
+	float T;
+	T= 2.0 * pi * sqrt(SWY2 / (386.4 * SWY));
+
+	cout << T << endl;
+
+	
+	// sumW = sum1DVector(weights, qty);
 
 	return 0;
 }
